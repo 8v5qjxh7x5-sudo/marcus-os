@@ -1,0 +1,1282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Marcus OS</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --black: #0A0A0A;
+    --surface: #111111;
+    --card: #181818;
+    --border: #2A2A2A;
+    --accent: #C8F135;
+    --accent-dim: rgba(200, 241, 53, 0.10);
+    --accent-glow: rgba(200, 241, 53, 0.22);
+    --text: #F0F0F0;
+    --muted: #666;
+    --white: #FFFFFF;
+    --red: #FF4444;
+    --red-dim: rgba(255,68,68,0.12);
+    --orange: #FF9500;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--black);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── SETUP SCREEN ─── */
+  #setup-screen {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: var(--black);
+    z-index: 1000;
+    padding: 40px 24px 32px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+  }
+  #setup-screen.visible { display: flex; }
+
+  .setup-logo {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 32px;
+  }
+  .setup-dot {
+    width: 12px; height: 12px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--accent);
+  }
+  .setup-logo-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  .setup-card {
+    width: 100%;
+    max-width: 420px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 28px 24px;
+  }
+  .setup-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 8px;
+  }
+  .setup-sub {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 24px;
+  }
+  .setup-sub a {
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .setup-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .setup-input-wrap {
+    position: relative;
+    margin-bottom: 16px;
+  }
+  .setup-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 44px 12px 14px;
+    color: var(--white);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .setup-input:focus { border-color: var(--accent); }
+  .setup-input.error { border-color: var(--red); }
+  .setup-input::placeholder { color: #444; }
+  .toggle-visible {
+    position: absolute;
+    right: 12px; top: 50%;
+    transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--muted); cursor: pointer;
+    padding: 4px; display: flex;
+  }
+  .toggle-visible:hover { color: var(--text); }
+  .setup-error {
+    font-size: 12px;
+    color: var(--red);
+    margin-bottom: 14px;
+    display: none;
+    line-height: 1.4;
+  }
+  .setup-error.visible { display: block; }
+  .setup-btn {
+    width: 100%;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 13px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--black);
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.02em;
+  }
+  .setup-btn:hover { background: #d4f542; }
+  .setup-btn:active { transform: scale(0.98); }
+  .setup-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .setup-hint {
+    margin-top: 16px;
+    font-size: 11px;
+    color: #444;
+    text-align: center;
+    line-height: 1.5;
+  }
+
+  /* ─── SETTINGS MODAL ─── */
+  #settings-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 900;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 0;
+  }
+  #settings-modal.visible { display: flex; }
+  .settings-sheet {
+    width: 100%;
+    max-width: 480px;
+    background: var(--card);
+    border-top: 1px solid var(--border);
+    border-radius: 16px 16px 0 0;
+    padding: 20px 20px 40px;
+  }
+  .settings-handle {
+    width: 36px; height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+  .settings-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--white);
+    margin-bottom: 20px;
+  }
+  .settings-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row-label {
+    font-size: 13px;
+    color: var(--text);
+  }
+  .settings-row-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .settings-action-btn {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 6px 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    white-space: nowrap;
+  }
+  .settings-action-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .settings-action-btn.danger:hover { border-color: var(--red); color: var(--red); }
+  .api-status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 6px var(--accent);
+    display: inline-block;
+    margin-right: 6px;
+  }
+  .api-status-dot.offline { background: var(--red); box-shadow: 0 0 6px var(--red); }
+
+  /* ─── MAIN HEADER ─── */
+  .header {
+    padding: 20px 20px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    background: var(--black);
+    z-index: 100;
+  }
+  .header-left { display: flex; align-items: center; gap: 10px; }
+  .logo-dot {
+    width: 9px; height: 9px;
+    background: var(--accent);
+    border-radius: 50%;
+    box-shadow: 0 0 7px var(--accent);
+    animation: pulse 2.5s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
+  .logo-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .phase-badge {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .gear-btn {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .gear-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ─── PROGRESS ─── */
+  .progress-wrap {
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--muted);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.08em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .progress-bar { height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.5s ease;
+    box-shadow: 0 0 6px var(--accent-glow);
+  }
+
+  /* ─── TASK LIST ─── */
+  .task-list {
+    padding: 12px 14px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  .task-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 13px 14px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+  .task-card::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+    background: transparent;
+    transition: background 0.2s;
+  }
+  .task-card:active { background: #1E1E1E; }
+  .task-card.active { border-color: var(--accent); background: #161B08; }
+  .task-card.active::before { background: var(--accent); }
+  .task-card.completed { opacity: 0.45; }
+  .task-card.completed::before { background: #444; }
+
+  .task-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    user-select: none;
+  }
+  .task-left { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+  .day-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .task-card.active .day-num { color: var(--accent); }
+  .task-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .task-card.active .task-title { color: var(--white); }
+  .task-right { display: flex; align-items: center; gap: 7px; flex-shrink: 0; }
+  .time-chip {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2px 7px;
+    border-radius: 20px;
+    letter-spacing: 0.04em;
+  }
+  .task-card.active .time-chip { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+  .check-circle {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    border: 1.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .task-card.completed .check-circle { background: #444; border-color: #444; }
+  .check-icon { display: none; }
+  .task-card.completed .check-icon { display: block; }
+
+  /* ─── EXPANDED ─── */
+  .task-expanded {
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+  .task-card.active .task-expanded { display: block; }
+
+  .task-body {
+    font-size: 13px;
+    color: #AAA;
+    line-height: 1.65;
+    margin-bottom: 14px;
+  }
+  .task-body strong { color: var(--white); font-weight: 600; }
+
+  .rest-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: #777;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  /* ─── CHAT ─── */
+  .chat-section { margin-top: 2px; }
+  .chat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-bottom: 12px;
+    max-height: 300px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .chat-messages::-webkit-scrollbar { width: 2px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .msg {
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    line-height: 1.55;
+    max-width: 96%;
+    word-break: break-word;
+  }
+  .msg.user {
+    background: var(--accent-dim);
+    border: 1px solid rgba(200,241,53,0.18);
+    color: var(--white);
+    align-self: flex-end;
+    border-bottom-right-radius: 2px;
+  }
+  .msg.ai {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: #CCC;
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+  }
+  .msg.ai strong { color: var(--white); }
+  .msg.ai code {
+    background: #222;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+  }
+  .msg.loading { color: var(--muted); font-style: italic; }
+  .msg.error-msg {
+    background: var(--red-dim);
+    border: 1px solid rgba(255,68,68,0.3);
+    color: #FF8888;
+    align-self: flex-start;
+    border-bottom-left-radius: 2px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    flex-direction: column;
+  }
+  .retry-btn {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 11px;
+    font-weight: 500;
+    background: none;
+    border: 1px solid rgba(255,68,68,0.4);
+    border-radius: 5px;
+    color: #FF8888;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-top: 2px;
+  }
+  .retry-btn:hover { background: var(--red-dim); }
+
+  .msg img {
+    max-width: 140px;
+    max-height: 140px;
+    border-radius: 6px;
+    display: block;
+    margin-bottom: 4px;
+    object-fit: cover;
+    border: 1px solid rgba(200,241,53,0.15);
+  }
+
+  /* ─── INPUT AREA ─── */
+  .image-preview-wrap {
+    display: none;
+    position: relative;
+    margin-bottom: 8px;
+  }
+  .image-preview-wrap.visible { display: inline-block; }
+  .image-preview {
+    width: 72px; height: 72px;
+    object-fit: cover;
+    border-radius: 7px;
+    border: 1.5px solid var(--accent);
+    display: block;
+  }
+  .image-remove {
+    position: absolute;
+    top: -5px; right: -5px;
+    width: 18px; height: 18px;
+    background: #333;
+    border: 1px solid #555;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #AAA;
+    font-size: 9px;
+    line-height: 1;
+    transition: all 0.15s;
+  }
+  .image-remove:hover { color: var(--white); background: #444; }
+
+  .chat-input-wrap {
+    display: flex;
+    gap: 7px;
+    align-items: flex-end;
+  }
+  .attach-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 40px; height: 40px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--muted);
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .attach-btn:hover, .attach-btn:active { border-color: var(--accent); color: var(--accent); }
+  .attach-btn.has-image { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+
+  .chat-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--white);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 16px; /* 16px prevents iOS zoom */
+    resize: none;
+    outline: none;
+    min-height: 40px;
+    max-height: 100px;
+    transition: border-color 0.2s;
+    line-height: 1.4;
+    -webkit-appearance: none;
+  }
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: #444; }
+
+  .send-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    width: 40px; height: 40px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .send-btn:hover { background: #d4f542; }
+  .send-btn:active { transform: scale(0.95); }
+  .send-btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+
+  /* ─── MARK DONE ─── */
+  .mark-done-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 14px;
+    padding: 9px 14px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    color: var(--muted);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.02em;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .mark-done-btn:hover, .mark-done-btn:active { border-color: var(--accent); color: var(--accent); }
+
+  .bottom-pad { height: 48px; }
+
+  /* ─── NO KEY BANNER ─── */
+  .no-key-banner {
+    display: none;
+    background: var(--red-dim);
+    border: 1px solid rgba(255,68,68,0.25);
+    border-radius: 7px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #FF9999;
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+  .no-key-banner.visible { display: block; }
+  .no-key-banner a { color: var(--orange); text-decoration: none; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- SETUP SCREEN -->
+<div id="setup-screen">
+  <div class="setup-logo">
+    <div class="setup-dot"></div>
+    <span class="setup-logo-text">Marcus OS</span>
+  </div>
+  <div class="setup-card">
+    <div class="setup-title">Connect Your AI</div>
+    <div class="setup-sub">
+      You need a free Anthropic API key to power the chat inside this app. Get one in 2 minutes at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> → API Keys → Create Key.
+    </div>
+    <div class="setup-label">Anthropic API Key</div>
+    <div class="setup-input-wrap">
+      <input
+        type="password"
+        id="api-key-input"
+        class="setup-input"
+        placeholder="sk-ant-..."
+        autocomplete="off"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+      >
+      <button class="toggle-visible" id="toggle-key-vis" onclick="toggleKeyVisibility()">
+        <svg id="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      </button>
+    </div>
+    <div class="setup-error" id="setup-error"></div>
+    <button class="setup-btn" id="setup-save-btn" onclick="saveApiKey()">Connect & Start Building</button>
+    <div class="setup-hint">Your key is stored only on this device. It never leaves your browser.<br>You can update it anytime via the settings gear.</div>
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div id="settings-modal" onclick="closeSettings(event)">
+  <div class="settings-sheet">
+    <div class="settings-handle"></div>
+    <div class="settings-title">Settings</div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">
+          <span class="api-status-dot" id="status-dot"></span>
+          API Connection
+        </div>
+        <div class="settings-row-sub" id="key-preview">Not connected</div>
+      </div>
+      <button class="settings-action-btn" onclick="openUpdateKey()">Update Key</button>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">Build Progress</div>
+        <div class="settings-row-sub" id="settings-progress-text">0 of 10 days complete</div>
+      </div>
+      <button class="settings-action-btn danger" onclick="confirmResetProgress()">Reset</button>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">Chat History</div>
+        <div class="settings-row-sub">All conversations across days</div>
+      </div>
+      <button class="settings-action-btn danger" onclick="confirmClearChats()">Clear All</button>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-row-label">Version</div>
+        <div class="settings-row-sub">Marcus OS v1.2 · Phase 1</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="main-app" style="display:none">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-dot"></div>
+      <span class="logo-text">Marcus OS</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <span class="phase-badge">Phase 1</span>
+      <button class="gear-btn" onclick="openSettings()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Build Progress</span>
+      <span id="progress-text">0 / 10</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="task-list" id="task-list"></div>
+  <div class="bottom-pad"></div>
+</div>
+
+<script>
+// ─── DATA ───
+const TASKS = [
+  {
+    day: 1, title: "Install Python", time: "30 min",
+    body: "Go to <strong>python.org</strong>, download the latest version, run the installer. Open Terminal and type: <strong>python3 --version</strong>. If it prints a version number, you're done. This is the engine that runs everything.",
+    context: "Day 1: Install Python on MacBook. Go to python.org, download latest, run installer. Open Terminal, type python3 --version. Should print something like Python 3.12.x. That confirms it worked."
+  },
+  {
+    day: 2, title: "Create Project Folder", time: "30 min",
+    body: "Open Terminal, type: <strong>mkdir marcus-os && cd marcus-os</strong>. Then: <strong>mkdir scanner dashboard alerts</strong>. This is the house everything gets built inside.",
+    context: "Day 2: Create project folder structure. Open Terminal. Run: mkdir marcus-os && cd marcus-os. Then: mkdir scanner dashboard alerts. These 3 folders = scanner (logic engine), dashboard (visual UI), alerts (notifications)."
+  },
+  {
+    day: 3, title: "Sign Up for Polygon.io", time: "30 min",
+    body: "Go to <strong>polygon.io</strong>, create a free account, upgrade to Starter (~$29/mo). Copy your API key into a Notes doc called <strong>\"Marcus OS Keys\"</strong>. This is the live market data feed.",
+    context: "Day 3: Sign up Polygon.io for live stock + options data. Starter plan ~$29/mo. Copy API key to Notes doc 'Marcus OS Keys'. This is compliant — raw data only, no recommendations, no brokerage connection."
+  },
+  {
+    day: 4, title: "Pull First Live Stock Price", time: "30 min",
+    body: "I'll give you a 5-line Python script. Paste it in Terminal, run it, and see <strong>AAPL's live price</strong> print on your screen. First time your system talks to the market.",
+    context: "Day 4: Run Python script to pull AAPL live price from Polygon.io. Uses requests library to call Polygon /v2/last/trade/AAPL endpoint. User pastes API key into script. If they ask for the script, provide it."
+  },
+  {
+    day: 5, title: "Sign Up for Tradier API", time: "30 min",
+    body: "Go to <strong>developer.tradier.com</strong>, create a free account, get your API key. Add it to Marcus OS Keys note. This is your <strong>options chain and IV data</strong> source.",
+    context: "Day 5: Sign up Tradier API at developer.tradier.com. Free account. Provides options chains, IV rank, Greeks. Add key to Marcus OS Keys note. Separate from Polygon — Polygon = stocks, Tradier = options data."
+  },
+  {
+    day: 6, title: "Pull First Options Chain", time: "30 min",
+    body: "Script that pulls <strong>AAPL's live options chain</strong> — strike prices, expiration dates, IV. First time you see real options data come through your own system.",
+    context: "Day 6: Python script pulls AAPL options chain from Tradier. Prints strikes, expirations, implied volatility in a clean table. If user asks for the script, provide it using Tradier's /markets/options/chains endpoint."
+  },
+  {
+    day: 7, title: "REST — Review & Questions", time: "30 min", isRest: true,
+    body: "Open your marcus-os folder. Look at what you've built. Re-read the scripts. <strong>Write 3 questions and ask them here.</strong> This is how you make sure you understand every piece before moving forward.",
+    context: "Day 7 rest day. Review: Python installed, project folder created, Polygon.io + Tradier connected, pulled stock price and options chain. User writes 3 questions. Answer them clearly and check their understanding."
+  },
+  {
+    day: 8, title: "Install Python Libraries", time: "30 min",
+    body: "Open Terminal, run 3 install commands I'll give you: <strong>pandas, requests, streamlit</strong>. These power the scanner and dashboard. Watch them install, confirm they work.",
+    context: "Day 8: Install pip libraries. Commands: pip3 install pandas requests streamlit. pandas=data, requests=API calls, streamlit=dashboard UI. If errors, likely need pip3 install --user or virtual env. Walk user through it."
+  },
+  {
+    day: 9, title: "Build Watchlist File", time: "30 min",
+    body: "Create <strong>watchlist.txt</strong> inside your marcus-os folder. Add 5 tickers: <strong>AAPL, NVDA, MSFT, AMZN, TSLA</strong>. One per line. This is what your scanner watches first.",
+    context: "Day 9: Create watchlist.txt in marcus-os folder. Add AAPL, NVDA, MSFT, AMZN, TSLA one per line. Command: cd marcus-os && touch watchlist.txt then open it in TextEdit or nano. This feeds the scanner loop."
+  },
+  {
+    day: 10, title: "Run First Full Scan", time: "30 min",
+    body: "Script that loops through your watchlist, pulls price + IV rank for each ticker, and prints a clean table. <strong>First time your system scans multiple stocks at once.</strong> This is the scanner engine.",
+    context: "Day 10: Python script reads watchlist.txt, loops each ticker, calls Polygon for price and Tradier for IV rank, prints formatted table with all 5. This is the scanner foundation. If they ask for the script, provide it."
+  }
+];
+
+// ─── STATE ───
+let apiKey = localStorage.getItem('marcus-api-key') || '';
+let completedDays = JSON.parse(localStorage.getItem('marcus-completed') || '[]');
+let chatHistories = JSON.parse(localStorage.getItem('marcus-chats') || '{}');
+let activeDay = null;
+const pendingImages = {};
+const pendingRetry = {}; // stores last failed message data for retry
+
+// ─── INIT ───
+function init() {
+  if (!apiKey) {
+    document.getElementById('setup-screen').classList.add('visible');
+  } else {
+    document.getElementById('main-app').style.display = 'block';
+    renderTasks();
+  }
+}
+
+// ─── API KEY SETUP ───
+function toggleKeyVisibility() {
+  const input = document.getElementById('api-key-input');
+  const icon = document.getElementById('eye-icon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    input.type = 'password';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+async function saveApiKey() {
+  const input = document.getElementById('api-key-input');
+  const errEl = document.getElementById('setup-error');
+  const btn = document.getElementById('setup-save-btn');
+  const key = input.value.trim();
+
+  errEl.classList.remove('visible');
+  input.classList.remove('error');
+
+  if (!key) {
+    showSetupError('Please enter your API key.');
+    return;
+  }
+  if (!key.startsWith('sk-ant-')) {
+    showSetupError('That doesn\'t look right. Anthropic keys start with "sk-ant-". Check console.anthropic.com → API Keys.');
+    input.classList.add('error');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Verifying...';
+
+  // Test the key with a minimal API call
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+      body: JSON.stringify({ model: 'claude-sonnet-4-6', max_tokens: 10, messages: [{ role: 'user', content: 'hi' }] })
+    });
+    const data = await res.json();
+    if (data.error) {
+      if (data.error.type === 'authentication_error') {
+        showSetupError('Invalid API key. Double-check it at console.anthropic.com → API Keys.');
+        input.classList.add('error');
+        btn.disabled = false;
+        btn.textContent = 'Connect & Start Building';
+        return;
+      }
+    }
+    // Valid
+    localStorage.setItem('marcus-api-key', key);
+    apiKey = key;
+    document.getElementById('setup-screen').classList.remove('visible');
+    document.getElementById('main-app').style.display = 'block';
+    renderTasks();
+  } catch (err) {
+    showSetupError('Could not reach Anthropic. Check your internet connection and try again.');
+    btn.disabled = false;
+    btn.textContent = 'Connect & Start Building';
+  }
+}
+
+function showSetupError(msg) {
+  const errEl = document.getElementById('setup-error');
+  errEl.textContent = msg;
+  errEl.classList.add('visible');
+}
+
+document.getElementById('api-key-input').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') saveApiKey();
+});
+
+// ─── SETTINGS ───
+function openSettings() {
+  const modal = document.getElementById('settings-modal');
+  const dot = document.getElementById('status-dot');
+  const preview = document.getElementById('key-preview');
+  const progressText = document.getElementById('settings-progress-text');
+
+  dot.className = 'api-status-dot' + (apiKey ? '' : ' offline');
+  preview.textContent = apiKey ? 'sk-ant-...' + apiKey.slice(-6) : 'Not connected';
+  progressText.textContent = `${completedDays.length} of 10 days complete`;
+
+  modal.classList.add('visible');
+}
+
+function closeSettings(e) {
+  if (e.target === document.getElementById('settings-modal')) {
+    document.getElementById('settings-modal').classList.remove('visible');
+  }
+}
+
+function openUpdateKey() {
+  document.getElementById('settings-modal').classList.remove('visible');
+  const input = document.getElementById('api-key-input');
+  input.value = apiKey;
+  input.type = 'password';
+  document.getElementById('setup-error').classList.remove('visible');
+  input.classList.remove('error');
+  document.getElementById('setup-save-btn').textContent = 'Update & Reconnect';
+  document.getElementById('setup-screen').classList.add('visible');
+}
+
+function confirmResetProgress() {
+  if (confirm('Reset all progress? This cannot be undone.')) {
+    completedDays = [];
+    saveState();
+    document.getElementById('settings-modal').classList.remove('visible');
+    renderTasks();
+  }
+}
+
+function confirmClearChats() {
+  if (confirm('Clear all chat history across every day? This cannot be undone.')) {
+    chatHistories = {};
+    saveState();
+    document.getElementById('settings-modal').classList.remove('visible');
+    renderTasks();
+  }
+}
+
+// ─── STATE SAVE ───
+function saveState() {
+  localStorage.setItem('marcus-completed', JSON.stringify(completedDays));
+  localStorage.setItem('marcus-chats', JSON.stringify(chatHistories));
+}
+
+// ─── PROGRESS ───
+function updateProgress() {
+  const count = completedDays.length;
+  document.getElementById('progress-text').textContent = `${count} / 10`;
+  document.getElementById('progress-fill').style.width = `${count * 10}%`;
+}
+
+// ─── RENDER ───
+function renderTasks() {
+  const list = document.getElementById('task-list');
+  list.innerHTML = '';
+
+  TASKS.forEach(task => {
+    const isActive = activeDay === task.day;
+    const isDone = completedDays.includes(task.day);
+    const chatKey = `day-${task.day}`;
+    const messages = chatHistories[chatKey] || [];
+
+    const card = document.createElement('div');
+    card.className = `task-card${isActive ? ' active' : ''}${isDone ? ' completed' : ''}`;
+
+    card.innerHTML = `
+      <div class="task-header">
+        <div class="task-left">
+          <span class="day-num">DAY ${String(task.day).padStart(2,'0')}</span>
+          <span class="task-title">${task.title}</span>
+        </div>
+        <div class="task-right">
+          <span class="time-chip">${task.time}</span>
+          <div class="check-circle">
+            <svg class="check-icon" width="10" height="10" viewBox="0 0 10 10" fill="none">
+              <path d="M2 5l2.5 2.5L8 3" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <div class="task-expanded">
+        ${task.isRest ? '<div class="rest-tag">⟳ Review Day</div>' : ''}
+        <p class="task-body">${task.body}</p>
+
+        <div class="chat-section">
+          <div class="chat-label">Ask anything about this task</div>
+          <div class="chat-messages" id="chat-${task.day}"></div>
+          <input type="file" id="file-${task.day}" accept="image/*" capture="environment" style="display:none">
+          <div class="image-preview-wrap" id="preview-wrap-${task.day}">
+            <img class="image-preview" id="preview-img-${task.day}" src="" alt="preview">
+            <div class="image-remove" onclick="removeImage(${task.day},event)">✕</div>
+          </div>
+          <div class="chat-input-wrap">
+            <button class="attach-btn" id="attach-${task.day}" onclick="triggerFileInput(${task.day},event)" title="Attach screenshot">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <textarea class="chat-input" id="input-${task.day}" placeholder="Type a question..." rows="1"></textarea>
+            <button class="send-btn" id="send-${task.day}">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="black" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        ${!isDone ? `<button class="mark-done-btn" id="done-btn-${task.day}">
+          <svg width="11" height="11" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 6l2.5 2.5L10 3"/></svg>
+          Mark Day ${task.day} Complete
+        </button>` : ''}
+      </div>
+    `;
+
+    // Populate chat messages
+    const chatEl = card.querySelector(`#chat-${task.day}`);
+    messages.forEach(m => {
+      const el = document.createElement('div');
+      el.className = `msg ${m.role}`;
+      if (m.imageDataUrl) {
+        const img = document.createElement('img');
+        img.src = m.imageDataUrl;
+        el.appendChild(img);
+      }
+      el.innerHTML += formatAI(m.text);
+      chatEl.appendChild(el);
+    });
+
+    // Card click (collapse/expand)
+    card.querySelector('.task-header').addEventListener('click', () => {
+      activeDay = isActive ? null : task.day;
+      renderTasks();
+      if (activeDay) {
+        setTimeout(() => {
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 60);
+      }
+    });
+
+    // File input change
+    const fileInput = card.querySelector(`#file-${task.day}`);
+    fileInput.addEventListener('change', () => handleImage(task.day, fileInput));
+
+    // Textarea auto-resize + enter key
+    const textarea = card.querySelector(`#input-${task.day}`);
+    textarea.addEventListener('input', () => {
+      textarea.style.height = 'auto';
+      textarea.style.height = Math.min(textarea.scrollHeight, 100) + 'px';
+    });
+    textarea.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(task.day); }
+    });
+
+    // Send button
+    card.querySelector(`#send-${task.day}`).addEventListener('click', () => sendMessage(task.day));
+
+    // Mark done
+    const doneBtn = card.querySelector(`#done-btn-${task.day}`);
+    if (doneBtn) {
+      doneBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        markDone(task.day);
+      });
+    }
+
+    list.appendChild(card);
+
+    // Scroll chat to bottom if active
+    if (isActive) {
+      setTimeout(() => { chatEl.scrollTop = chatEl.scrollHeight; }, 80);
+    }
+  });
+
+  updateProgress();
+}
+
+// ─── FORMAT AI TEXT ───
+function formatAI(text) {
+  if (!text) return '';
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\n/g, '<br>');
+}
+
+// ─── IMAGE HANDLING ───
+function triggerFileInput(day, e) {
+  e.stopPropagation();
+  document.getElementById(`file-${day}`).click();
+}
+
+function handleImage(day, input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  // Compress to max 800px wide, quality 0.75
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if (w > MAX) { h = Math.round(h * MAX / w); w = MAX; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const compressed = canvas.toDataURL('image/jpeg', 0.75);
+      pendingImages[day] = { dataUrl: compressed, mediaType: 'image/jpeg' };
+      document.getElementById(`preview-img-${day}`).src = compressed;
+      document.getElementById(`preview-wrap-${day}`).classList.add('visible');
+      document.getElementById(`attach-${day}`).classList.add('has-image');
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeImage(day, e) {
+  if (e) e.stopPropagation();
+  delete pendingImages[day];
+  document.getElementById(`preview-img-${day}`).src = '';
+  document.getElementById(`preview-wrap-${day}`).classList.remove('visible');
+  document.getElementById(`attach-${day}`).classList.remove('has-image');
+  document.getElementById(`file-${day}`).value = '';
+}
+
+// ─── SEND MESSAGE ───
+async function sendMessage(day) {
+  if (!apiKey) {
+    alert('No API key set. Tap the gear icon to add your key.');
+    return;
+  }
+
+  const input = document.getElementById(`input-${day}`);
+  const sendBtn = document.getElementById(`send-${day}`);
+  const chatEl = document.getElementById(`chat-${day}`);
+  const text = input.value.trim();
+  const imageData = pendingImages[day];
+
+  if (!text && !imageData) return;
+
+  const task = TASKS.find(t => t.day === day);
+  const chatKey = `day-${day}`;
+  if (!chatHistories[chatKey]) chatHistories[chatKey] = [];
+
+  // Save to history
+  const entry = { role: 'user', text: text || '📷 Image', imageDataUrl: imageData ? imageData.dataUrl : null };
+  chatHistories[chatKey].push(entry);
+
+  input.value = '';
+  input.style.height = 'auto';
+  sendBtn.disabled = true;
+
+  // Render user msg
+  const userMsg = document.createElement('div');
+  userMsg.className = 'msg user';
+  if (imageData) {
+    const imgEl = document.createElement('img');
+    imgEl.src = imageData.dataUrl;
+    userMsg.appendChild(imgEl);
+  }
+  if (text) {
+    const span = document.createElement('span');
+    span.textContent = text;
+    userMsg.appendChild(span);
+  }
+  chatEl.appendChild(userMsg);
+  if (imageData) removeImage(day);
+
+  // Loading indicator
+  const loadingMsg = document.createElement('div');
+  loadingMsg.className = 'msg ai loading';
+  loadingMsg.textContent = 'Thinking...';
+  chatEl.appendChild(loadingMsg);
+  chatEl.scrollTop = chatEl.scrollHeight;
+
+  // Build message payload
+  const history = chatHistories[chatKey];
+  const systemContext = `You are the AI brain inside Marcus OS — a private trading + business system built for Marcus Fair. Marcus is a financial advisor at RBC in Houston, an entrepreneur building Solitary 1v1 (competitive basketball brand), a father, and active trader. He has 1 focused hour/day, basic tech skills, $50K allocated for options trading, and is learning everything as he builds. He's on Day ${day} of a 30-day Phase 1 build plan to create a local Mac-based options scanning system.
+
+CURRENT TASK (Day ${day}): ${task.context}
+
+PRIOR CONVERSATION:
+${history.slice(0, -1).map(m => `${m.role === 'user' ? 'Marcus' : 'AI'}: ${m.text}`).join('\n')}
+
+Rules: Be direct, conversational, no fluff. Answer like a knowledgeable partner who knows his full situation. If he sends a screenshot, read it carefully and tell him exactly what you see and whether it's correct. If he needs a code snippet, give it clean and complete. Keep responses tight — he's on mobile.`;
+
+  const userContent = [];
+  if (imageData) {
+    userContent.push({ type: 'image', source: { type: 'base64', media_type: imageData.mediaType, data: imageData.dataUrl.split(',')[1] } });
+  }
+  userContent.push({ type: 'text', text: systemContext + '\n\nMarcus: ' + (text || 'What do you see in this image?') });
+
+  // Store for retry
+  pendingRetry[day] = { userContent, loadingMsg, chatEl, chatKey, sendBtn };
+
+  await callAPI(day);
+}
+
+async function callAPI(day) {
+  const { userContent, loadingMsg, chatEl, chatKey, sendBtn } = pendingRetry[day];
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: userContent }]
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      if (response.status === 401) throw new Error('auth');
+      if (response.status === 429) throw new Error('ratelimit');
+      throw new Error(err?.error?.message || 'api_error');
+    }
+
+    const data = await response.json();
+    const aiText = data.content?.[0]?.text || 'No response. Try again.';
+
+    chatHistories[chatKey].push({ role: 'ai', text: aiText });
+    saveState();
+
+    loadingMsg.className = 'msg ai';
+    loadingMsg.innerHTML = formatAI(aiText);
+
+  } catch (err) {
+    let errorMsg = 'Something went wrong. ';
+    if (err.name === 'AbortError') errorMsg = 'Request timed out (30s). Check your connection.';
+    else if (err.message === 'auth') errorMsg = 'API key rejected. Go to Settings → Update Key.';
+    else if (err.message === 'ratelimit') errorMsg = 'Too many requests. Wait 60 seconds and try again.';
+    else if (!navigator.onLine) errorMsg = 'No internet connection detected.';
+    else errorMsg = 'Connection failed. Check your network.';
+
+    loadingMsg.className = 'msg error-msg';
+    loadingMsg.innerHTML = `<span>${errorMsg}</span><button class="retry-btn" onclick="retryMessage(${day})">↺ Retry</button>`;
+  }
+
+  sendBtn.disabled = false;
+  chatEl.scrollTop = chatEl.scrollHeight;
+}
+
+async function retryMessage(day) {
+  const { loadingMsg, sendBtn } = pendingRetry[day];
+  loadingMsg.className = 'msg ai loading';
+  loadingMsg.textContent = 'Retrying...';
+  sendBtn.disabled = true;
+  await callAPI(day);
+}
+
+// ─── MARK DONE ───
+function markDone(day) {
+  if (!completedDays.includes(day)) {
+    completedDays.push(day);
+    saveState();
+  }
+  activeDay = null;
+  renderTasks();
+}
+
+// ─── START ───
+init();
+</script>
+</body>
+</html>
